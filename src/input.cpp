@@ -49,10 +49,12 @@ TtyInput *TtyInput::createInstance()
 		return 0;
 	}
 
+	/*
 	if (!strstr(buf, "/dev/tty") && !strstr(buf, "/dev/vc")) {
 		fprintf(stderr, "stdin isn't a interactive tty!\n");
 		return 0;
 	}
+	*/
 
 	return new TtyInput();
 }

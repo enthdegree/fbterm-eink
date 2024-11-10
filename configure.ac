@@ -10,8 +10,8 @@ AC_CONFIG_HEADERS([config.h])
 AC_SUBST([RELEASE_DATE], "October 2010")
 
 # Checks for programs.
-AC_PROG_CXX
-AC_PROG_CC
+AC_PROG_CXX([CXX])
+AC_PROG_CC([CC])
 AC_PROG_RANLIB
 PKG_PROG_PKG_CONFIG
 
@@ -40,6 +40,7 @@ AC_ARG_ENABLE(signalfd,
 AC_CHECK_LIB([util], [forkpty])
 PKG_CHECK_MODULES([FT2], [freetype2])
 PKG_CHECK_MODULES([FC], [fontconfig])
+PKG_CHECK_MODULES([FBINK], [fbink])
 
 # Checks for header files.
 m4_warn([obsolete],

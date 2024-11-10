@@ -26,11 +26,20 @@
 #include <sys/mman.h>
 #include <linux/kd.h>
 #include <linux/fb.h>
+
+#ifdef EINK_FB
+#include <fbink.h>
+#endif
+
 #include "fbdev.h"
 #include "font.h"
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
+
+#ifdef EINK_FB
+const FBInkConfig fbdev_einkConfig = { U0 };
+#endif
 
 static fb_fix_screeninfo finfo;
 static fb_var_screeninfo vinfo;
@@ -47,12 +56,12 @@ FbDev *FbDev::initFbDev()
 		fbdev_fd = open("/dev/fb0", O_RDWR);
 		if (fbdev_fd < 0) fbdev_fd = open("/dev/fb/0", O_RDWR);
 	}
-
+	
 	if (fbdev_fd < 0) {
 		fprintf(stderr, "can't open frame buffer device!\n");
 		return 0;
 	}
-
+	
 	fcntl(fbdev_fd, F_SETFD, fcntl(fbdev_fd, F_GETFD) | FD_CLOEXEC);
 	ioctl(fbdev_fd, FBIOGET_FSCREENINFO, &finfo);
 	ioctl(fbdev_fd, FBIOGET_VSCREENINFO, &vinfo);
@@ -84,6 +93,11 @@ FbDev *FbDev::initFbDev()
 		return 0;
 	}
 
+#ifdef EINK_FB
+	printf("init...\n");
+	fbink_init(fbdev_fd, &fbdev_einkConfig);
+	printf("finished init.\n");
+#endif
 	return new FbDev();
 }
 
@@ -94,7 +108,6 @@ FbDev::FbDev()
 	mBitsPerPixel = vinfo.bits_per_pixel;
 	mBytesPerLine = finfo.line_length;
 	mVMemBase = (u8 *)mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fbdev_fd, 0);
-
 
 	if (mRotateType == Rotate0 || mRotateType == Rotate180) {
 		bool ypan = (vinfo.yres_virtual > vinfo.yres && finfo.ypanstep && !(FH(1) % finfo.ypanstep));
@@ -206,3 +219,11 @@ void FbDev::setupPalette(bool restore)
 		ioctl(fbdev_fd, FBIOPUTCMAP, &cmap);
 	}
 }
+
+#ifdef EINK_FB
+int FbDev::refresh(u32 x, u32 y, u32 w, u32 h) {
+  printf("refreshing...\n");
+  return fbink_refresh(fbdev_fd, y, x, w, h, &fbdev_einkConfig);
+  printf("refreshed.\n");
+}
+#endif

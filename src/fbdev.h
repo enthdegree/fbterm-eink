@@ -25,14 +25,18 @@
 
 class FbDev : public Screen {
 private:
-	friend class Screen;
-	static FbDev *initFbDev();
+  friend class Screen;
+  static FbDev *initFbDev();
 
-	FbDev();
-	~FbDev();
+  FbDev();
+  ~FbDev();
 
-	virtual void setupOffset();
-	virtual void setupPalette(bool restore);
-	virtual const s8 *drvId();
+  virtual void setupOffset();
+  virtual void setupPalette(bool restore);
+  virtual const s8 *drvId();
+
+#ifdef EINK_FB
+  virtual int refresh(u32 x, u32 y, u32 w, u32 h);
+#endif
 };
 #endif

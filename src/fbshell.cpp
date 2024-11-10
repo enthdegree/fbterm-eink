@@ -430,6 +430,11 @@ void FbShell::updateCursor()
 			Rectangle rect = { FW(mCursor.x), FH(mCursor.y + 1) - 1, FW(1), 1 };
 			mImProxy->redrawImWin(rect);
 		}
+#ifdef EINK_FB
+		else {
+		Screen::instance()->refresh(FW(mCursor.x), FH(mCursor.y + 1) - 1, FW(1), 1);
+		}
+#endif
 		break;
 
 	default: {

@@ -21,6 +21,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+
+#ifdef EINK_FB
+#include <fbink.h>
+#endif
+
 #include "screen.h"
 #include "font.h"
 #include "fbshellman.h"
@@ -238,6 +243,10 @@ void Screen::drawText(u32 x, u32 y, u8 fc, u8 bc, u16 num, u16 *text, bool *dw)
 	} else if (draw_space) {
 		fillRect(startx, y, x - startx, FH(1), bc);
 	}
+
+#ifdef EINK_FB
+	this->refresh(startx, y, x - startx, FH(1));
+#endif
 }
 
 void Screen::drawGlyphs(u32 x, u32 y, u8 fc, u8 bc, u16 num, u16 *text, bool *dw)
@@ -268,6 +277,10 @@ void Screen::fillRect(u32 x, u32 y, u32 w, u32 h, u8 color)
 		(this->*fill)(x, y++, w, color);
 	}
 }
+
+#ifdef EINK_FB
+int Screen::refresh(u32 y, u32 x, u32 w, u32 h) { return -1; }
+#endif
 
 void Screen::drawGlyph(u32 x, u32 y, u8 fc, u8 bc, u16 code, bool dw)
 {

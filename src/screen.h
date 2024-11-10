@@ -48,6 +48,10 @@ public :
 	void drawText(u32 x, u32 y, u8 fc, u8 bc, u16 num, u16 *text, bool *dw);
 	void fillRect(u32 x, u32 y, u32 w, u32 h, u8 color);
 
+#ifdef EINK_FB
+        virtual int refresh(u32 x, u32 y, u32 w, u32 h);
+#endif
+
 	bool move(u16 scol, u16 srow, u16 dcol, u16 drow, u16 w, u16 h);
 	void setPalette(const Color *palette);
 	
@@ -75,7 +79,7 @@ private:
 	virtual void setupOffset() {}
 	virtual void setupPalette(bool restore) {}
 	virtual const s8 *drvId() = 0;
-
+  
 	void eraseMargin(bool top, u16 h);
 	void drawGlyphs(u32 x, u32 y, u8 fc, u8 bc, u16 num, u16 *text, bool *dw);
 	void drawGlyph(u32 x, u32 y, u8 fc, u8 bc, u16 code, bool dw);

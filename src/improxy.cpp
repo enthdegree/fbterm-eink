@@ -387,6 +387,10 @@ void ImProxy::doFillRect(Message *m)
 {
 	Rectangle &rect = m->fillRect.rect;
 	Screen::instance()->fillRect(rect.x, rect.y, rect.w, rect.h, m->fillRect.color);
+#ifdef EINK_FB
+	Screen::instance()->refresh(rect.x, rect.y, rect.w, rect.h);
+#endif
+
 }
 
 static void utf8_to_utf16(u8 *utf8, u16 *utf16, u16 &len)

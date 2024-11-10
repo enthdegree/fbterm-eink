@@ -164,6 +164,9 @@ void FbShellManager::redraw(u16 x, u16 y, u16 w, u16 h)
 	} else {
 		screen->fillRect(FW(x), FH(y), FW(w), FH(h), 0);
 	}
+#ifdef EINK_FB
+	Screen::instance()->refresh(FW(x), FH(y), FW(w), FH(h));
+#endif
 }
 
 void FbShellManager::childProcessExited(s32 pid)

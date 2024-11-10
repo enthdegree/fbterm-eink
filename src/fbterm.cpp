@@ -129,6 +129,7 @@ void FbTerm::init()
 	sigaddset(&sigmask, SIGUSR2);
 	sigaddset(&sigmask, SIGALRM);
 	sigaddset(&sigmask, SIGTERM);
+
 	sigaddset(&sigmask, SIGHUP);
 
 	sigprocmask(SIG_BLOCK, &sigmask, &oldSigmask);
@@ -165,9 +166,9 @@ void FbTerm::run()
 	if (!mInit) return;
 
 	if (isActiveTerm()) processSignal(SIGUSR2);
-
+	
 	FbShellManager::instance()->createShell();
-
+	
 	mRun = true;
 	FbIoDispatcher *io = (FbIoDispatcher*)IoDispatcher::instance();
 	while (mRun) {
