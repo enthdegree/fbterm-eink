@@ -29,6 +29,14 @@
 
 #ifdef EINK_FB
 #include <fbink.h>
+#include <atomic>
+#include <pthread.h>
+#include <unistd.h>
+const FBInkConfig fbdev_einkConfig = { 0 };
+static pthread_t refresh_thread;
+const useconds_t eink_refresh_cooldown_us = 80000;
+static std::atomic<bool> refresh_thread_do_refresh;
+static std::atomic<bool> refresh_thread_shutdown;
 #endif
 
 #include "fbdev.h"
@@ -36,10 +44,6 @@
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
-
-#ifdef EINK_FB
-const FBInkConfig fbdev_einkConfig = { U0 };
-#endif
 
 static fb_fix_screeninfo finfo;
 static fb_var_screeninfo vinfo;
@@ -93,11 +97,6 @@ FbDev *FbDev::initFbDev()
 		return 0;
 	}
 
-#ifdef EINK_FB
-	printf("init...\n");
-	fbink_init(fbdev_fd, &fbdev_einkConfig);
-	printf("finished init.\n");
-#endif
 	return new FbDev();
 }
 
@@ -128,12 +127,23 @@ FbDev::FbDev()
 			}
 		}
 	}
+
+#ifdef EINK_FB
+	fbink_init(fbdev_fd, &fbdev_einkConfig);
+	pthread_create(&refresh_thread, NULL, &FbDev::einkRefreshWorker, this);
+	refresh(0, 0, mWidth, mHeight);
+#endif
 }
 
 FbDev::~FbDev()
 {
 	munmap(mVMemBase, finfo.smem_len);
 	close(fbdev_fd);
+	
+#ifdef EINK_FB
+	refresh_thread_shutdown = true;
+	pthread_join(refresh_thread, NULL);
+#endif
 
 	if (mScrollType != Redraw) {
 		ioctl(STDIN_FILENO, KDSETMODE, KD_GRAPHICS);
@@ -221,9 +231,30 @@ void FbDev::setupPalette(bool restore)
 }
 
 #ifdef EINK_FB
+void *FbDev::einkRefreshWorker(void *p) { // Do a full refresh when do_refresh flag is up
+  FbDev* f = (FbDev*) p;
+  refresh_thread_do_refresh = false;
+  refresh_thread_shutdown = false;
+  while(!refresh_thread_shutdown) {
+    usleep(eink_refresh_cooldown_us);
+    if(refresh_thread_do_refresh) {
+      refresh_thread_do_refresh = false;
+      if((f->mRotateType == Rotate90) || (f->mRotateType == Rotate270)) {
+	fbink_refresh(fbdev_fd, 0, 0, f->mHeight, f->mWidth, &fbdev_einkConfig);
+      }
+      else {
+	fbink_refresh(fbdev_fd, 0, 0, f->mWidth, f->mHeight, &fbdev_einkConfig);
+      }
+    }
+  }
+  return p;
+}
+
 int FbDev::refresh(u32 x, u32 y, u32 w, u32 h) {
-  printf("refreshing...\n");
-  return fbink_refresh(fbdev_fd, y, x, w, h, &fbdev_einkConfig);
-  printf("refreshed.\n");
+  //return fbink_refresh(fbdev_fd, y, x, w, h, &fbdev_einkConfig);
+  refresh_thread_do_refresh = true;
+  return 0;
 }
 #endif
+
+

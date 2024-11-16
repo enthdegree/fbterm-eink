@@ -1,0 +1,44 @@
+10build env:
+export CC=$HOME/x-tools/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc
+export CXX=$HOME/x-tools/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++
+source ~/Projects/kobo/koxtoolchain/refs/x-compile.sh kobo env
+
+libxml2:
+ ./configure --host=arm-linux-gnueabihf --build=x86_64-linux-gnu --prefix=$HOME/Projects/kobo/fbterm/build LT_SYS_LIBRARY_PATH=$HOME/Projects/kobo/fbterm/build/lib/ PKG_CONFIG_PATH=$HOME/Projects/kobo/fbterm/build/lib/pkgconfig/ --with-zlib=no --with-lzma=no --with-python=no
+
+freetype:
+./configure --host=arm-linux-gnueabihf --build=x86_64-linux-gnu --prefix=$HOME/Projects/kobo/fbterm/build LT_SYS_LIBRARY_PATH=$HOME/Projects/kobo/fbterm/build/lib/ PKG_CONFIG_PATH=$HOME/Projects/kobo/fbterm/build/lib/pkgconfig/ --with-png=no --with-zlib=no --with-harfbuzz=no --with-brotli=no
+
+fontconfig:
+./configure --host=arm-linux-gnueabihf --build=x86_64-linux-gnu --prefix=$HOME/Projects/kobo/fbterm/build LT_SYS_LIBRARY_PATH=$HOME/Projects/kobo/fbterm/build/lib/ PKG_CONFIG_PATH=$HOME/Projects/kobo/fbterm/build/lib/pkgconfig/ --enable-libxml2
+
+fbink:
+make kobo
+merge Kobo/user/local/fbink/* with build/*
+
+fbterm:
+./configure --host=arm-linux-gnueabihf --build=x86_64-linux-gnu --prefix=$HOME/Projects/kobo/fbterm/build LT_SYS_LIBRARY_PATH=$HOME/Projects/kobo/fbterm/build/lib/ PKG_CONFIG_PATH=$HOME/Projects/kobo/fbterm/build/lib/pkgconfig PKG_CONFIG_LIBDIR=$HOME/Projects/kobo/fbterm/build/lib --disable-vesa CXXFLAGS="-Wl,-rpath-link=$HOME/Projects/kobo/fbterm/build/lib"
+
+./configure --host=arm-linux-gnueabihf --build=x86_64-linux-gnu --prefix=$HOME/Projects/kobo/fbterm/build LT_SYS_LIBRARY_PATH=$HOME/Projects/kobo/fbterm/build/lib/ PKG_CONFIG_PATH=$HOME/Projects/kobo/fbterm/build/lib/pkgconfig PKG_CONFIG_LIBDIR=$HOME/Projects/kobo/fbterm/build/lib --disable-vesa CXXFLAGS="-Wl,-rpath-link=$HOME/Projects/kobo/fbterm/build/lib -DEINK_FB" FBINK_LIBS="$HOME/Projects/kobo/fbterm/build/lib/libfbink.so" FBINK_CFLAGS="-I$HOME/Projects/kobo/fbterm/build/include -pthread"
+
+commit to device:
+scp -r ../build root@192.168.0.108:/mnt/onboard
+
+export fbterm_tty=tty1
+mknod tty1 c 4 1
+setsid -c sh </dev/tty1 >/dev/tty1 2>&1
+setsid sh -c "exec sh <> /dev/tty1 >&0 2>&1"
+/sbin/getty -L $fbterm_tty 0 linux
+
+export FONTCONFIG_PATH=/mnt/onboard/build/etc/fonts
+export FONTCONFIG_FILE=/mnt/onboard/build/etc/fonts/fonts.conf
+export LD_LIBRARY_PATH=/mnt/onboard/build/lib
+cd /mnt/onboard/build/bin
+./fc-cache
+./fbterm --font-size=32 --font-names="Mono" --color-foreground=FFFFFF --color-background=000000 --cursor-shape=1 --cursor-interval=0 -r 1
+
+export FONTCONFIG_PATH=/mnt/onboard/build/etc/fonts
+export FONTCONFIG_FILE=/mnt/onboard/build/etc/fonts/fonts.conf
+export LD_LIBRARY_PATH=/mnt/onboard/build/lib
+cd /mnt/onboard/build/bin
+watch -n 0.2 "./fbink --refresh"

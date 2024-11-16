@@ -165,7 +165,8 @@ void FbTerm::run()
 {
 	if (!mInit) return;
 
-	if (isActiveTerm()) processSignal(SIGUSR2);
+	//if (isActiveTerm()) processSignal(SIGUSR2);
+	processSignal(SIGUSR2);
 	
 	FbShellManager::instance()->createShell();
 	

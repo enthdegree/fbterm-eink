@@ -36,7 +36,8 @@ private:
   virtual const s8 *drvId();
 
 #ifdef EINK_FB
-  virtual int refresh(u32 x, u32 y, u32 w, u32 h);
+  int refresh(u32 x, u32 y, u32 w, u32 h);
+  static void *einkRefreshWorker(void *p);
 #endif
 };
 #endif

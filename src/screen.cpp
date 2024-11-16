@@ -193,19 +193,36 @@ bool Screen::move(u16 scol, u16 srow, u16 dcol, u16 drow, u16 w, u16 h)
 
 void Screen::eraseMargin(bool top, u16 h)
 {
-	if (mWidth % FW(1)) {
-		fillRect(FW(mCols), top ? 0 : FH(mRows - h), mWidth % FW(1), FH(h), 0);
-	}
+  u32 x_px, y_px, w_px, h_px;
+  if (mWidth % FW(1)) {
+    x_px = FW(mCols);
+    y_px = top ? 0 : FH(mRows - h);
+    w_px = mWidth % FW(1);
+    h_px = FH(h);
+    fillRect(x_px, y_px, w_px, h_px, 0);
+#ifdef EINK_FB
+    this->refresh(x_px, y_px, w_px, h_px);
+#endif
+  }
 
-	if (mHeight % FH(1)) {
-		fillRect(0, FH(mRows), mWidth, mHeight % FH(1), 0);
-	}
+  if (mHeight % FH(1)) {
+    x_px = 0;
+    y_px = FH(mRows);
+    w_px = mWidth;
+    h_px = mHeight % FH(1);
+    fillRect(x_px, y_px, w_px, h_px, 0);
+#ifdef EINK_FB
+    this->refresh(x_px, y_px, w_px, h_px);
+#endif
+  }
 }
 
 void Screen::drawText(u32 x, u32 y, u8 fc, u8 bc, u16 num, u16 *text, bool *dw)
 {
-	u32 startx, fw = FW(1);
-
+        u32 startx, fw = FW(1);
+#ifdef EINK_FB
+	u32 x0 = x;
+#endif
 	u16 startnum, *starttext;
 	bool *startdw, draw_space = false, draw_text = false;
 
@@ -245,7 +262,7 @@ void Screen::drawText(u32 x, u32 y, u8 fc, u8 bc, u16 num, u16 *text, bool *dw)
 	}
 
 #ifdef EINK_FB
-	this->refresh(startx, y, x - startx, FH(1));
+	this->refresh(x0, y, x - x0, FH(1));
 #endif
 }
 
